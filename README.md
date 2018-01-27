@@ -28,11 +28,11 @@ This firmware for today:  https://github.com/monteslu/iotdevfest18/blob/master/i
 ![screenshot](esp32.jpg)
 
 * remove paper from acrylic
-* attach batter holder
+* attach battery holder
 * addatch esp32 board & connect power
 * solder neopixel strip
 * attach neopixels
-
+* insert battery
 
 
 
