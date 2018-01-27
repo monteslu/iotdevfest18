@@ -35,7 +35,7 @@ This firmware for today:  https://github.com/monteslu/iotdevfest18/blob/master/i
 
 ## Sending Bytes.
 
-![screenshot](esp32.jpg)
+![screenshot](chirpers.jpg)
 
 * service Id: `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
 
