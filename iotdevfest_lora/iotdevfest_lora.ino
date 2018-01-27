@@ -20,10 +20,8 @@ Adafruit_NeoPixel controlstrip = Adafruit_NeoPixel(3, CONTROL_PIXEL_PIN, NEO_GRB
 // https://www.uuidgenerator.net/
 
 #define SERIAL_SERVICE_UUID "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
-#define SERIAL_CHAR_UUID    "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
 
-
-#define IOTDF_SERVICE_UUID        "bada5566-e91f-1337-a49b-8675309fb070"
+#define SERIAL_CHAR_UUID          "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
 #define IOTDF_RGB_CHAR_UUID       "bada5566-e91a-1337-a49b-8675309fb070"
 #define IOTDF_WRITE_CHAR_UUID     "bada5566-e91b-1337-a49b-8675309fb070"
 #define IOTDF_WRITECLR_CHAR_UUID  "bada5566-e91c-1337-a49b-8675309fb070"
@@ -32,7 +30,7 @@ Adafruit_NeoPixel controlstrip = Adafruit_NeoPixel(3, CONTROL_PIXEL_PIN, NEO_GRB
 
 char macString[] = "abcd";
 
-char spaces[] = "                                                                                                                                "; 
+char spaces[] = "                                                                                                                                ";
 
 // GPIO5  -- SX1278's SCK
 // GPIO19 -- SX1278's MISO
@@ -82,15 +80,15 @@ class SerialCallbacks: public BLECharacteristicCallbacks {
       std::string value = pCharacteristic->getValue();
       int len = value.length();
 
-        
+
       if (value.length() > 0) {
         LoRa.beginPacket();
         LoRa.print(macString);
         LoRa.print("|");
-        
+
         Serial.println("*********");
         Serial.print("New serial value: ");
-        
+
 
         for (int i = 0; i < len; i++) {
           Serial.print(value[i]);
@@ -98,7 +96,7 @@ class SerialCallbacks: public BLECharacteristicCallbacks {
         }
 
         LoRa.endPacket();
-        
+
         Serial.println();
         Serial.println("length ");
         Serial.println(len);
@@ -209,7 +207,7 @@ class ScreenModeCallbacks: public BLECharacteristicCallbacks {
         if((value[1] == 10) || (value[1] == 16) || (value[1] == 24)) {
           fontSize = value[1];
         }
-        
+
       }
 
       if (value.length() > 2) {
@@ -219,7 +217,7 @@ class ScreenModeCallbacks: public BLECharacteristicCallbacks {
       if (value.length() > 3) {
         drawY = value[3];
       }
-      
+
 
     }
 };
@@ -250,7 +248,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
   pSerialChar->setCallbacks(new SerialCallbacks());
-  
+
 
   BLECharacteristic *iotdfWriteChar = serialService->createCharacteristic(
                                          IOTDF_WRITE_CHAR_UUID,
@@ -259,14 +257,14 @@ void setup() {
                                        );
   iotdfWriteChar->setCallbacks(new ScreenDrawCallbacks());
 
-  
+
   BLECharacteristic *iotdfWriteClrChar = serialService->createCharacteristic(
                                          IOTDF_WRITECLR_CHAR_UUID,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
   iotdfWriteClrChar->setCallbacks(new ScreenDrawClearCallbacks());
-  
+
 
   BLECharacteristic *iotdfModeChar = serialService->createCharacteristic(
                                          IOTDF_MODE_CHAR_UUID,
@@ -274,7 +272,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
   iotdfModeChar->setCallbacks(new ScreenModeCallbacks());
-  
+
 
   BLECharacteristic *iotdfRGBChar = serialService->createCharacteristic(
                                          IOTDF_RGB_CHAR_UUID,
@@ -282,7 +280,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
   iotdfRGBChar->setCallbacks(new RGBPixelCallbacks());
-                                       
+
 
 //  pSerialChar->setValue("Hello World");
   // Start the service
@@ -308,7 +306,7 @@ void setup() {
   digitalWrite(16, HIGH); // while OLED is running, must set GPIO16 in high
   display.init();
   display.flipScreenVertically();
-  
+
   writeOled("chirp chrip !");
 
   display.clear();
@@ -328,7 +326,7 @@ void setup() {
   LoRa.print("|chirp!");
   LoRa.endPacket();
 
-  
+
 }
 
 void drawRed(int slot){
@@ -351,7 +349,7 @@ void drawRed(int slot){
       autostrip.setPixelColor(2, autostrip.Color( 50, 0, 0));
       break;
   }
-  
+
   autostrip.show();
 }
 
@@ -359,8 +357,8 @@ void loop() {
 
   int spot = tick % 6;
 
-  
-  
+
+
   tick++;
 
 //  Serial.println(spot);
@@ -390,9 +388,9 @@ void loop() {
       // default is optional
       break;
   }
-  
-  
-  
-  
+
+
+
+
   delay(250);
 }
