@@ -22,16 +22,20 @@ This firmware for today:  https://github.com/monteslu/iotdevfest18/blob/master/i
 
 ## Badge Assembly
 
+![screenshot](esp32.jpg)
+
 * remove paper from acrylic
 * attach batter holder
 * addatch esp32 board & connect power
 * solder neopixel strip
 * attach neopixels
 
-![screenshot](esp32.jpg)
+
 
 
 ## Sending Bytes.
+
+![screenshot](esp32.jpg)
 
 * service Id: `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
 
