@@ -23,10 +23,11 @@ Adafruit_NeoPixel controlstrip = Adafruit_NeoPixel(3, CONTROL_PIXEL_PIN, NEO_GRB
 #define SERIAL_CHAR_UUID    "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
 
 
-#define IOTDF_SERVICE_UUID    "bada5566-e91f-1337-a49b-8675309fb070"
-#define IOTDF_RGB_CHAR_UUID   "bada5566-e91a-1337-a49b-8675309fb070"
-#define IOTDF_WRITE_CHAR_UUID "bada5566-e91b-1337-a49b-8675309fb070"
-#define IOTDF_MODE_CHAR_UUID  "bada5566-e91c-1337-a49b-8675309fb070"
+#define IOTDF_SERVICE_UUID        "bada5566-e91f-1337-a49b-8675309fb070"
+#define IOTDF_RGB_CHAR_UUID       "bada5566-e91a-1337-a49b-8675309fb070"
+#define IOTDF_WRITE_CHAR_UUID     "bada5566-e91b-1337-a49b-8675309fb070"
+#define IOTDF_WRITECLR_CHAR_UUID  "bada5566-e91c-1337-a49b-8675309fb070"
+#define IOTDF_MODE_CHAR_UUID      "bada5566-e91d-1337-a49b-8675309fb070"
 
 
 char macString[] = "abcd";
@@ -80,29 +81,30 @@ class SerialCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
       std::string value = pCharacteristic->getValue();
       int len = value.length();
-      char val[len];
 
+        
       if (value.length() > 0) {
+        LoRa.beginPacket();
+        LoRa.print(macString);
+        LoRa.print("|");
+        
         Serial.println("*********");
-        Serial.print("New value: ");
+        Serial.print("New serial value: ");
+        
+
         for (int i = 0; i < len; i++) {
           Serial.print(value[i]);
-           val[i] = value[i];
+          LoRa.print(value[i]);
         }
+
+        LoRa.endPacket();
         
         Serial.println();
         Serial.println("length ");
         Serial.println(len);
         Serial.println("*********");
 
-        // send packet
-        LoRa.beginPacket();
-        char outputStr[len + 5];
-        sprintf(outputStr,"%s|%s",macString,val);
-        Serial.println(outputStr);
-        LoRa.print(outputStr);
-        LoRa.endPacket();
-        delay(1000);
+
       }
 
     }
@@ -111,18 +113,12 @@ class SerialCallbacks: public BLECharacteristicCallbacks {
 class RGBPixelCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
       std::string value = pCharacteristic->getValue();
-      char val[value.length()];
+      const char *cstr = value.c_str();
 
       if (value.length() > 0) {
         Serial.println("*********");
         Serial.print("New value: ");
-        for (int i = 0; i < value.length(); i++) {
-          Serial.print(value[i]);
-           val[i] = value[i];
-        }
-
-
-        Serial.println();
+        Serial.println(cstr);
         Serial.println("*********");
 
       }
@@ -148,20 +144,37 @@ class RGBPixelCallbacks: public BLECharacteristicCallbacks {
 class ScreenDrawCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
       std::string value = pCharacteristic->getValue();
-      char val[value.length()];
+      const char *cstr = value.c_str();
 
       if (value.length() > 0) {
         Serial.println("*********");
         Serial.print("New Screen Draw value: ");
-        for (int i = 0; i < value.length(); i++) {
-          Serial.print(value[i]);
-           val[i] = value[i];
-        }
-
-        Serial.println();
+        Serial.println(cstr);
         Serial.println("*********");
 
-        writeOled(val);
+        writeOled(cstr);
+
+      }
+
+    }
+};
+
+
+class ScreenDrawClearCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      std::string value = pCharacteristic->getValue();
+      const char *cstr = value.c_str();
+
+      if (value.length() > 0) {
+        Serial.println("*********");
+        Serial.print("New Screen Draw Clear value: ");
+        Serial.println(cstr);
+        Serial.println("*********");
+
+        display.clear();
+        display.display();
+        delay(100);
+        writeOled(cstr);
 
       }
 
@@ -171,7 +184,6 @@ class ScreenDrawCallbacks: public BLECharacteristicCallbacks {
 class ScreenModeCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
       std::string value = pCharacteristic->getValue();
-      char val[value.length()];
 
       if (value.length() > 0) {
         Serial.println("*********");
@@ -181,7 +193,6 @@ class ScreenModeCallbacks: public BLECharacteristicCallbacks {
         Serial.print("New ScreenMode value: ");
         for (int i = 0; i < value.length(); i++) {
           Serial.print(value[i]);
-           val[i] = value[i];
         }
 
 
@@ -247,6 +258,14 @@ void setup() {
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
   iotdfWriteChar->setCallbacks(new ScreenDrawCallbacks());
+
+  
+  BLECharacteristic *iotdfWriteClrChar = serialService->createCharacteristic(
+                                         IOTDF_WRITECLR_CHAR_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+  iotdfWriteClrChar->setCallbacks(new ScreenDrawClearCallbacks());
   
 
   BLECharacteristic *iotdfModeChar = serialService->createCharacteristic(
@@ -306,8 +325,8 @@ void setup() {
 }
 
 void drawRed(int slot){
-  Serial.print("slot ");
-  Serial.println(slot);
+//  Serial.print("slot ");
+//  Serial.println(slot);
   switch (slot) {
     case 0:
       autostrip.setPixelColor(0, autostrip.Color( 50, 0, 0));
@@ -337,7 +356,7 @@ void loop() {
   
   tick++;
 
-  Serial.println(spot);
+//  Serial.println(spot);
 
   // TODO, someone clean this up please
   switch (spot) {
