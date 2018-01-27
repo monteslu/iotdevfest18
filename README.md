@@ -15,13 +15,12 @@
 
 ## ESP32 + LoRa
 
-![screenshot](BLE_diagram.png)
+![screenshot](lora.png)
 
 This firmware for today:  https://github.com/monteslu/iotdevfest18/blob/master/iotdevfest_lora/iotdevfest_lora.ino
 
 
 ## Badge Assembly
-[![bot assembly](https://img.youtube.com/vi/OVHW_4q0uF4/0.jpg)](https://www.youtube.com/watch?v=OVHW_4q0uF4)
 
 * remove paper from acrylic
 * attach batter holder
