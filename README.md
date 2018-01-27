@@ -13,7 +13,7 @@
 
 ![screenshot](chirpers.png)
 
-[https://chirpers.com](https://chirpers.com)
+[https://chirpers.com](https://chirpers.com/browser)
 
 
 ## ESP32 + LoRa
