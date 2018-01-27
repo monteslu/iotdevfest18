@@ -322,6 +322,13 @@ void setup() {
 
   autostrip.begin();
   controlstrip.begin();
+
+  LoRa.beginPacket();
+  LoRa.print(macString);
+  LoRa.print("|chirp!");
+  LoRa.endPacket();
+
+  
 }
 
 void drawRed(int slot){
