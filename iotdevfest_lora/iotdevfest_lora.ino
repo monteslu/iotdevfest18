@@ -14,7 +14,7 @@ Adafruit_NeoPixel controlstrip = Adafruit_NeoPixel(3, CONTROL_PIXEL_PIN, NEO_GRB
 
 #include <BLEDevice.h>
 #include <BLEUtils.h>
- #include <BLEServer.h>
+#include <BLEServer.h>
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -54,19 +54,22 @@ int drawY = 0;
 
 int tick = 0;
 
+volatile char message[255];
+volatile bool messageIdle = true;
+
 
 BLECharacteristic *pSerialChar;
 
 void writeOled(String message) {
 
   display.setTextAlignment(TEXT_ALIGN_LEFT);
-  if(fontSize == 10) {
+  if (fontSize == 10) {
     display.setFont(ArialMT_Plain_10);
   }
-  else if(fontSize == 16) {
+  else if (fontSize == 16) {
     display.setFont(ArialMT_Plain_16);
   }
-  else if(fontSize == 24) {
+  else if (fontSize == 24) {
     display.setFont(ArialMT_Plain_24);
   }
 
@@ -81,28 +84,16 @@ class SerialCallbacks: public BLECharacteristicCallbacks {
       int len = value.length();
 
 
-      if (value.length() > 0) {
-        LoRa.beginPacket();
-        LoRa.print(macString);
-        LoRa.print("|");
-
-        Serial.println("*********");
-        Serial.print("New serial value: ");
-
-
+      if (value.length() > 0 && messageIdle) {
         for (int i = 0; i < len; i++) {
-          Serial.print(value[i]);
-          LoRa.print(value[i]);
+          //          Serial.print(value[i]);
+          message[i] = value[i];
+                       //          LoRa.print(value[i]);
         }
 
-        LoRa.endPacket();
+        message[len] = '\0';
 
-        Serial.println();
-        Serial.println("length ");
-        Serial.println(len);
-        Serial.println("*********");
-
-
+        messageIdle = false;
       }
 
     }
@@ -121,15 +112,15 @@ class RGBPixelCallbacks: public BLECharacteristicCallbacks {
 
       }
 
-      if(value.length() > 2){
+      if (value.length() > 2) {
         controlstrip.setPixelColor(0, controlstrip.Color( value[0], value[1], value[2] ));
       }
 
-      if(value.length() > 5){
+      if (value.length() > 5) {
         controlstrip.setPixelColor(1, controlstrip.Color( value[3], value[4], value[5] ));
       }
 
-      if(value.length() > 8){
+      if (value.length() > 8) {
         controlstrip.setPixelColor(2, controlstrip.Color( value[6], value[7], value[8] ));
       }
 
@@ -197,14 +188,14 @@ class ScreenModeCallbacks: public BLECharacteristicCallbacks {
         Serial.println();
         Serial.println("*********");
 
-        if(value[0] > 0) {
+        if (value[0] > 0) {
           display.clear();
           display.display();
         }
       }
 
       if (value.length() > 1) {
-        if((value[1] == 10) || (value[1] == 16) || (value[1] == 24)) {
+        if ((value[1] == 10) || (value[1] == 16) || (value[1] == 24)) {
           fontSize = value[1];
         }
 
@@ -227,6 +218,8 @@ class ScreenModeCallbacks: public BLECharacteristicCallbacks {
 void setup() {
   pinMode(25, OUTPUT); //Send success, LED will bright 1 second
 
+  message[0] = '\0';
+
 
   Serial.begin(115200);
   while (!Serial); //If just the the basic function, must connect to a computer
@@ -234,7 +227,7 @@ void setup() {
   uint8_t chipid[6];
   esp_efuse_read_mac(chipid);
   sprintf(macString, "%02x%02x", chipid[4], chipid[5]);
-  Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n",chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]);
+  Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n", chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]);
 
 
   BLEDevice::init(macString);
@@ -243,46 +236,46 @@ void setup() {
   BLEService *serialService = pServer->createService(SERIAL_SERVICE_UUID);
 
   pSerialChar = serialService->createCharacteristic(
-                                         SERIAL_CHAR_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
+                  SERIAL_CHAR_UUID,
+                  BLECharacteristic::PROPERTY_READ |
+                  BLECharacteristic::PROPERTY_WRITE
+                );
   pSerialChar->setCallbacks(new SerialCallbacks());
 
 
   BLECharacteristic *iotdfWriteChar = serialService->createCharacteristic(
-                                         IOTDF_WRITE_CHAR_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
+                                        IOTDF_WRITE_CHAR_UUID,
+                                        BLECharacteristic::PROPERTY_READ |
+                                        BLECharacteristic::PROPERTY_WRITE
+                                      );
   iotdfWriteChar->setCallbacks(new ScreenDrawCallbacks());
 
 
   BLECharacteristic *iotdfWriteClrChar = serialService->createCharacteristic(
-                                         IOTDF_WRITECLR_CHAR_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
+      IOTDF_WRITECLR_CHAR_UUID,
+      BLECharacteristic::PROPERTY_READ |
+      BLECharacteristic::PROPERTY_WRITE
+                                         );
   iotdfWriteClrChar->setCallbacks(new ScreenDrawClearCallbacks());
 
 
   BLECharacteristic *iotdfModeChar = serialService->createCharacteristic(
-                                         IOTDF_MODE_CHAR_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
+                                       IOTDF_MODE_CHAR_UUID,
+                                       BLECharacteristic::PROPERTY_READ |
+                                       BLECharacteristic::PROPERTY_WRITE
+                                     );
   iotdfModeChar->setCallbacks(new ScreenModeCallbacks());
 
 
   BLECharacteristic *iotdfRGBChar = serialService->createCharacteristic(
-                                         IOTDF_RGB_CHAR_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
+                                      IOTDF_RGB_CHAR_UUID,
+                                      BLECharacteristic::PROPERTY_READ |
+                                      BLECharacteristic::PROPERTY_WRITE
+                                    );
   iotdfRGBChar->setCallbacks(new RGBPixelCallbacks());
 
 
-//  pSerialChar->setValue("Hello World");
+  //  pSerialChar->setValue("Hello World");
   // Start the service
   pServer->getAdvertising()->addServiceUUID(SERIAL_SERVICE_UUID);
   serialService->start();
@@ -329,9 +322,9 @@ void setup() {
 
 }
 
-void drawRed(int slot){
-//  Serial.print("slot ");
-//  Serial.println(slot);
+void drawRed(int slot) {
+  //  Serial.print("slot ");
+  //  Serial.println(slot);
   switch (slot) {
     case 0:
       autostrip.setPixelColor(0, autostrip.Color( 50, 0, 0));
@@ -358,10 +351,54 @@ void loop() {
   int spot = tick % 6;
 
 
+  if (messageIdle == false) {
+    LoRa.beginPacket();
+    LoRa.print(macString);
+    LoRa.print("|");
+
+    Serial.println("*********");
+    Serial.print("New serial value: ");
+
+
+    int len = 0;
+
+    for (int i = 0; message[i] != '\0'; i++) {
+      Serial.print(message[i]);
+      LoRa.print(message[i]);
+
+      len++;
+    }
+
+    LoRa.endPacket();
+
+    Serial.println();
+    Serial.println("length ");
+    Serial.println(len);
+    Serial.println("*********");
+
+    message[0] = '\0';
+    messageIdle = true;
+  }
+
+  // try to parse packet
+  int packetSize = LoRa.parsePacket();
+  if (packetSize) {
+    // received a packet
+    Serial.print("Received packet '");
+
+    // read packet
+    while (LoRa.available()) {
+      Serial.print((char)LoRa.read());
+    }
+
+    // print RSSI of packet
+    Serial.print("' with RSSI ");
+    Serial.println(LoRa.packetRssi());
+  }
 
   tick++;
 
-//  Serial.println(spot);
+  //  Serial.println(spot);
 
   // TODO, someone clean this up please
   switch (spot) {
