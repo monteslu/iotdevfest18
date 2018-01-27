@@ -10,6 +10,9 @@
 
 ## Web Bluetooth
 
+
+![screenshot](chirpers.png)
+
 [https://chirpers.com](https://chirpers.com)
 
 
@@ -35,9 +38,10 @@ This firmware for today:  https://github.com/monteslu/iotdevfest18/blob/master/i
 
 ## Sending Bytes.
 
-![screenshot](chirpers.png)
 
-* service Id: `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
+Our main service Id for the badge: `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
+
+### characteristics
 
 * lora relay Characteristic `6e400002-b5a3-f393-e0a9-e50e24dcca9e`
 
