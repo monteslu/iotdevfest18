@@ -15,6 +15,7 @@ Adafruit_NeoPixel controlstrip = Adafruit_NeoPixel(3, CONTROL_PIXEL_PIN, NEO_GRB
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <BLE2902.h>
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -237,45 +238,47 @@ void setup() {
 
   pSerialChar = serialService->createCharacteristic(
                   SERIAL_CHAR_UUID,
-                  BLECharacteristic::PROPERTY_READ |
-                  BLECharacteristic::PROPERTY_WRITE
+                  BLECharacteristic::PROPERTY_READ   |
+                  BLECharacteristic::PROPERTY_WRITE  |
+                  BLECharacteristic::PROPERTY_NOTIFY |
+                  BLECharacteristic::PROPERTY_INDICATE
                 );
   pSerialChar->setCallbacks(new SerialCallbacks());
-
-
-  BLECharacteristic *iotdfWriteChar = serialService->createCharacteristic(
-                                        IOTDF_WRITE_CHAR_UUID,
-                                        BLECharacteristic::PROPERTY_READ |
-                                        BLECharacteristic::PROPERTY_WRITE
-                                      );
-  iotdfWriteChar->setCallbacks(new ScreenDrawCallbacks());
-
-
-  BLECharacteristic *iotdfWriteClrChar = serialService->createCharacteristic(
-      IOTDF_WRITECLR_CHAR_UUID,
-      BLECharacteristic::PROPERTY_READ |
-      BLECharacteristic::PROPERTY_WRITE
-                                         );
-  iotdfWriteClrChar->setCallbacks(new ScreenDrawClearCallbacks());
-
-
-  BLECharacteristic *iotdfModeChar = serialService->createCharacteristic(
-                                       IOTDF_MODE_CHAR_UUID,
+ BLECharacteristic *iotdfWriteChar = serialService->createCharacteristic(
+                                       IOTDF_WRITE_CHAR_UUID,
                                        BLECharacteristic::PROPERTY_READ |
                                        BLECharacteristic::PROPERTY_WRITE
                                      );
-  iotdfModeChar->setCallbacks(new ScreenModeCallbacks());
+ iotdfWriteChar->setCallbacks(new ScreenDrawCallbacks());
 
 
-  BLECharacteristic *iotdfRGBChar = serialService->createCharacteristic(
-                                      IOTDF_RGB_CHAR_UUID,
+ BLECharacteristic *iotdfWriteClrChar = serialService->createCharacteristic(
+     IOTDF_WRITECLR_CHAR_UUID,
+     BLECharacteristic::PROPERTY_READ |
+     BLECharacteristic::PROPERTY_WRITE
+                                        );
+ iotdfWriteClrChar->setCallbacks(new ScreenDrawClearCallbacks());
+
+
+ BLECharacteristic *iotdfModeChar = serialService->createCharacteristic(
+                                      IOTDF_MODE_CHAR_UUID,
                                       BLECharacteristic::PROPERTY_READ |
                                       BLECharacteristic::PROPERTY_WRITE
                                     );
-  iotdfRGBChar->setCallbacks(new RGBPixelCallbacks());
+ iotdfModeChar->setCallbacks(new ScreenModeCallbacks());
 
 
-  //  pSerialChar->setValue("Hello World");
+ BLECharacteristic *iotdfRGBChar = serialService->createCharacteristic(
+                                     IOTDF_RGB_CHAR_UUID,
+                                     BLECharacteristic::PROPERTY_READ |
+                                     BLECharacteristic::PROPERTY_WRITE
+                                   );
+ iotdfRGBChar->setCallbacks(new RGBPixelCallbacks());
+
+
+  pSerialChar->addDescriptor(new BLE2902());
+
+//  pSerialChar->setValue("Hello World");
   // Start the service
   pServer->getAdvertising()->addServiceUUID(SERIAL_SERVICE_UUID);
   serialService->start();
@@ -383,14 +386,22 @@ void loop() {
   // try to parse packet
   int packetSize = LoRa.parsePacket();
   if (packetSize) {
+    char blah[packetSize + 1];
     // received a packet
     Serial.print("Received packet '");
-
+    int count = 0;
     // read packet
     while (LoRa.available()) {
-      Serial.print((char)LoRa.read());
+      char c = LoRa.read();
+      Serial.print(c);
+      blah[count] = c;
+      count++;
     }
 
+    blah[count] = '\0';
+
+    pSerialChar->setValue(blah);
+    pSerialChar->notify();
     // print RSSI of packet
     Serial.print("' with RSSI ");
     Serial.println(LoRa.packetRssi());
