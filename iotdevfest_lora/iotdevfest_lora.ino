@@ -23,6 +23,7 @@ Adafruit_NeoPixel controlstrip = Adafruit_NeoPixel(3, CONTROL_PIXEL_PIN, NEO_GRB
 #define SERIAL_SERVICE_UUID "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 
 #define SERIAL_CHAR_UUID          "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+#define SERIAL_CHAR_OUT_UUID      "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
 #define IOTDF_RGB_CHAR_UUID       "bada5566-e91a-1337-a49b-8675309fb070"
 #define IOTDF_WRITE_CHAR_UUID     "bada5566-e91b-1337-a49b-8675309fb070"
 #define IOTDF_WRITECLR_CHAR_UUID  "bada5566-e91c-1337-a49b-8675309fb070"
@@ -60,6 +61,7 @@ volatile bool messageIdle = true;
 
 
 BLECharacteristic *pSerialChar;
+BLECharacteristic *pSerialOutChar;
 
 void writeOled(String message) {
 
@@ -243,7 +245,16 @@ void setup() {
                   BLECharacteristic::PROPERTY_NOTIFY |
                   BLECharacteristic::PROPERTY_INDICATE
                 );
-  pSerialChar->setCallbacks(new SerialCallbacks());
+ pSerialChar->setCallbacks(new SerialCallbacks());
+
+ pSerialOutChar = serialService->createCharacteristic(
+                  SERIAL_CHAR_OUT_UUID,
+                  BLECharacteristic::PROPERTY_READ   |
+                  BLECharacteristic::PROPERTY_NOTIFY |
+                  BLECharacteristic::PROPERTY_INDICATE
+                );
+// pSerialOutChar->setCallbacks(new SerialCallbacks());
+ 
  BLECharacteristic *iotdfWriteChar = serialService->createCharacteristic(
                                        IOTDF_WRITE_CHAR_UUID,
                                        BLECharacteristic::PROPERTY_READ |
@@ -277,6 +288,7 @@ void setup() {
 
 
   pSerialChar->addDescriptor(new BLE2902());
+  pSerialOutChar->addDescriptor(new BLE2902());
 
 //  pSerialChar->setValue("Hello World");
   // Start the service
@@ -400,8 +412,11 @@ void loop() {
 
     blah[count] = '\0';
 
-    pSerialChar->setValue(blah);
-    pSerialChar->notify();
+    
+//    pSerialChar->setValue(blah);
+//    pSerialChar->notify();
+    pSerialOutChar->setValue(blah);
+    pSerialOutChar->notify();
     // print RSSI of packet
     Serial.print("' with RSSI ");
     Serial.println(LoRa.packetRssi());
@@ -440,5 +455,5 @@ void loop() {
 
 
 
-  delay(250);
+//  delay(250);
 }
